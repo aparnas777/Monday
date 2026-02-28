@@ -29,8 +29,6 @@ def get_agent_executor():
     )
     tools = get_tools()
 
-    # create_tool_calling_agent uses Groq's native tool-calling API
-    # This avoids ALL string parsing issues (no StopIteration risk)
     prompt = ChatPromptTemplate.from_messages([
         ("system",
          "You are an expert Business Intelligence AI Agent for executives and founders. "
@@ -81,7 +79,6 @@ if prompt := st.chat_input("Ask a question about your business (e.g. 'How is our
 
     with st.chat_message("assistant"):
         with st.spinner("Fetching live data from Monday.com & analyzing..."):
-            # Build proper LangChain message history
             chat_history = []
             for m in st.session_state.messages[:-1]:
                 if m["role"] == "user":
