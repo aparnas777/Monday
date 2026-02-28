@@ -41,6 +41,8 @@ def get_all_boards() -> str:
     }
     """
     data = execute_graphql(query)
+    if not data:
+        return "No data returned from Monday API."
     boards = data.get("boards", [])
     if not boards:
         return "No boards found."
