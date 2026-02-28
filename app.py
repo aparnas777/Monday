@@ -5,11 +5,8 @@ from dotenv import load_dotenv
 import pandas as pd
 import json
 
-<<<<<<< HEAD
-from langchain.agents import AgentExecutor, create_openai_tools_agent
-=======
+
 from langchain.agents import AgentExecutor, create_tool_calling_agent
->>>>>>> 03ea738 (Changes made)
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
@@ -53,13 +50,10 @@ def get_agent_executor():
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ])
     
-<<<<<<< HEAD
-    agent = create_openai_tools_agent(llm, tools, prompt)
-    return AgentExecutor(agent=agent, tools=tools, verbose=False, return_intermediate_steps=False)
-=======
+
     agent = create_tool_calling_agent(llm, tools, prompt)
     return AgentExecutor(agent=agent, tools=tools, verbose=True, return_intermediate_steps=True)
->>>>>>> 03ea738 (Changes made)
+
 
 agent_executor = get_agent_executor()
 
