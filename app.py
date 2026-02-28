@@ -29,7 +29,7 @@ if not api_token or not openai_key:
 @st.cache_resource
 def get_agent_executor():
     llm = ChatGroq(
-    model_name="llama-3.1-70b-versatile",
+    model_name="llama-3.1-8b-instant",
     temperature=0
 )
     tools = get_tools()
