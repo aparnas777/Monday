@@ -1,11 +1,12 @@
 import os
 import requests
 import json
-import pandas as pd
-from typing import List, Dict, Any
-from langchain_core.tools import tool
+from typing import Optional, Type
+from langchain_core.tools import BaseTool
+from pydantic import BaseModel, Field
 
 MONDAY_API_URL = "https://api.monday.com/v2"
+
 
 def _get_headers():
     token = os.environ.get("MONDAY_API_TOKEN", "")
@@ -14,6 +15,7 @@ def _get_headers():
         "Content-Type": "application/json",
         "API-Version": "2024-01"
     }
+
 
 def execute_graphql(query: str, variables: dict = None) -> dict:
     payload = {"query": query}
@@ -25,13 +27,10 @@ def execute_graphql(query: str, variables: dict = None) -> dict:
         json=payload,
         headers=_get_headers()
     )
-
     response.raise_for_status()
 
     try:
         res_json = response.json()
-        print("DEBUG → GraphQL Query Variables:", variables)
-        print("DEBUG → Response JSON:", res_json)
     except Exception:
         return {}
 
@@ -43,99 +42,119 @@ def execute_graphql(query: str, variables: dict = None) -> dict:
         return {}
 
     data = res_json.get("data")
-
     if not isinstance(data, dict):
         return {}
 
     return data
 
-@tool
-def get_all_boards() -> str:
-    """Fetches a list of all accessible Monday.com boards. Returns their IDs and names."""
-    print("DEBUG → get_all_boards CALLED")
 
-    query = """
-    query {
-        boards {
-            id
-            name
-            description
+# ── Tool 1: Get All Boards ────────────────────────────────────────────────────
+# Using BaseTool + explicit schema avoids the `__arg1 in None` crash that
+# happens when a @tool function has zero parameters and Groq sends null input.
+
+class GetAllBoardsInput(BaseModel):
+    # Dummy field — tool needs no real input, but LangChain/Groq require
+    # at least one field in the schema or they send null and crash.
+    placeholder: Optional[str] = Field(
+        default="",
+        description="Leave empty. This tool requires no input."
+    )
+
+
+class GetAllBoardsTool(BaseTool):
+    name: str = "get_all_boards"
+    description: str = (
+        "Fetches a list of all accessible Monday.com boards. "
+        "Returns their IDs and names. Call this first if you don't know the board IDs."
+    )
+    args_schema: Type[BaseModel] = GetAllBoardsInput
+
+    def _run(self, placeholder: str = "") -> str:
+        query = """
+        query {
+            boards {
+                id
+                name
+                description
+            }
         }
-    }
-    """
-    data = execute_graphql(query)
+        """
+        data = execute_graphql(query)
+        if not data:
+            return "No data returned from Monday API."
+        boards = data.get("boards", [])
+        if not boards:
+            return "No boards found."
 
-    if not data:
-        return "No data returned from Monday API."
+        result = "Available Boards:\n"
+        for b in boards:
+            result += f"- Board Name: '{b['name']}' (ID: {b['id']})\n"
+        return result
 
-    boards = data.get("boards", [])
-    if not boards:
-        return "No boards found."
-    
-    result = "Available Boards:\n"
-    for b in boards:
-        result += f"- Board Name: '{b['name']}' (ID: {b['id']})\n"
-    return result
 
-@tool
-def get_board_data(board_id: str) -> str:
-    """Fetches ALL items and their column values for a specific board ID.
-    Use this when you need to answer business intelligence questions.
-    The data is returned as a JSON string representing the table.
-    """
+# ── Tool 2: Get Board Data ────────────────────────────────────────────────────
 
-    print("DEBUG → get_board_data CALLED")
-    print("DEBUG → Board ID Received:", board_id)
-    query = """
-    query ($boardId: [ID!]) {
-        boards(ids: $boardId) {
-            name
-            items_page (limit: 500) {
-                cursor
-                items {
-                    name
-                    column_values {
-                        column {
-                            title
+class GetBoardDataInput(BaseModel):
+    board_id: str = Field(
+        description="The numeric Monday.com board ID to fetch data from."
+    )
+
+
+class GetBoardDataTool(BaseTool):
+    name: str = "get_board_data"
+    description: str = (
+        "Fetches ALL items and their column values for a specific Monday.com board ID. "
+        "Use this to answer business intelligence questions about deals, revenue, pipeline, etc. "
+        "Returns data as a JSON string."
+    )
+    args_schema: Type[BaseModel] = GetBoardDataInput
+
+    def _run(self, board_id: str) -> str:
+        query = """
+        query ($boardId: [ID!]) {
+            boards(ids: $boardId) {
+                name
+                items_page(limit: 500) {
+                    cursor
+                    items {
+                        name
+                        column_values {
+                            column {
+                                title
+                            }
+                            text
                         }
-                        text
                     }
                 }
             }
         }
-    }
-    """
-    data = execute_graphql(query, {"boardId": [board_id]})
-    print("DEBUG → Raw Data From Monday:", data)
+        """
+        data = execute_graphql(query, {"boardId": [board_id]})
 
-    if not isinstance(data, dict):
-        return f"No data returned for board {board_id}."
+        if not isinstance(data, dict):
+            return f"No data returned for board {board_id}."
 
-    boards = data.get("boards") or []
-    if not boards:
-        return f"Board {board_id} not found."
-    
-    board = boards[0]
-    items = board.get("items_page", {}).get("items", [])
-    
-    if not items:
-        return f"No items found in board '{board['name']}'."
-        
-    # Flatten the data to be easily understandable by the LLM
-    flat_data = []
-    for item in items:
-        row = {"Item Name": item.get("name")}
-        for col_val in item.get("column_values", []):
-            col_title = col_val.get("column", {}).get("title")
-            # Clean text (handle nulls)
-            val = col_val.get("text")
-            if val is not None:
-                row[col_title] = val
-            else:
-                row[col_title] = "null"
-        flat_data.append(row)
-        
-    return json.dumps(flat_data)
+        boards = data.get("boards") or []
+        if not boards:
+            return f"Board {board_id} not found."
+
+        board = boards[0]
+        items = board.get("items_page", {}).get("items", [])
+
+        if not items:
+            return f"No items found in board '{board['name']}'."
+
+        flat_data = []
+        for item in items:
+            row = {"Item Name": item.get("name")}
+            for col_val in item.get("column_values", []):
+                col_title = col_val.get("column", {}).get("title")
+                val = col_val.get("text")
+                row[col_title] = val if val is not None else "null"
+            flat_data.append(row)
+
+        return json.dumps(flat_data)
+
 
 def get_tools():
-    return [get_all_boards, get_board_data]
+    return [GetAllBoardsTool(), GetBoardDataTool()]
