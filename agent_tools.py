@@ -51,6 +51,7 @@ def execute_graphql(query: str, variables: dict = None) -> dict:
 
 @tool
 def get_all_boards() -> str:
+    """Fetches a list of all accessible Monday.com boards. Returns their IDs and names."""
     print("DEBUG → get_all_boards CALLED")
 
     query = """
