@@ -98,15 +98,13 @@ if prompt := st.chat_input("Ask a question about your business (e.g. 'How is our
                 
                 if not isinstance(response, dict):
                     st.error("Invalid response from agent.")
-                    return
-                
+                    st.stop()
+
                 output = response.get("output")
-                
+
                 if not output:
                     st.error("Agent returned no output.")
-                    return
-                
-                st.markdown(output)
+                    st.stop()
                 
                 # Show tools used
                 intermediate_steps = response.get("intermediate_steps", [])
