@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 import pandas as pd
 import json
 
-from langchain.agents import AgentExecutor, create_openai_tools_agent
-from langchain_openai import ChatOpenAI
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -28,7 +28,10 @@ if not api_token or not openai_key:
 # Initialize LangChain
 @st.cache_resource
 def get_agent_executor():
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0) # gpt-4o gives best reasoning over JSON tables
+    llm = ChatGroq(
+    model_name="llama3-70b-8192",
+    temperature=0
+)
     tools = get_tools()
     
     prompt = ChatPromptTemplate.from_messages([
@@ -46,7 +49,7 @@ def get_agent_executor():
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ])
     
-    agent = create_openai_tools_agent(llm, tools, prompt)
+    agent = create_tool_calling_agent(llm, tools, prompt)
     return AgentExecutor(agent=agent, tools=tools, verbose=False, return_intermediate_steps=False)
 
 agent_executor = get_agent_executor()
