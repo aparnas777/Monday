@@ -96,7 +96,16 @@ if prompt := st.chat_input("Ask a question about your business (e.g. 'How is our
                     "chat_history": chat_history
                 })
                 
-                output = response["output"]
+                if not isinstance(response, dict):
+                    st.error("Invalid response from agent.")
+                    return
+                
+                output = response.get("output")
+                
+                if not output:
+                    st.error("Agent returned no output.")
+                    return
+                
                 st.markdown(output)
                 
                 # Show tools used
