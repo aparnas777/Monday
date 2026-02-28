@@ -79,9 +79,13 @@ def get_all_boards() -> str:
 
 @tool
 def get_board_data(board_id: str) -> str:
+    """Fetches ALL items and their column values for a specific board ID.
+    Use this when you need to answer business intelligence questions.
+    The data is returned as a JSON string representing the table.
+    """
+
     print("DEBUG → get_board_data CALLED")
     print("DEBUG → Board ID Received:", board_id)
-    """Fetches ALL items and their column values for a specific board ID. Use this when you need to answer business intelligence questions. The data is returned as a JSON string representing the table."""
     query = """
     query ($boardId: [ID!]) {
         boards(ids: $boardId) {
