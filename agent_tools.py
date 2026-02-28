@@ -30,6 +30,8 @@ def execute_graphql(query: str, variables: dict = None) -> dict:
 
     try:
         res_json = response.json()
+        print("DEBUG → GraphQL Query Variables:", variables)
+        print("DEBUG → Response JSON:", res_json)
     except Exception:
         return {}
 
@@ -49,7 +51,8 @@ def execute_graphql(query: str, variables: dict = None) -> dict:
 
 @tool
 def get_all_boards() -> str:
-    """Fetches a list of all accessible Monday.com boards. Returns their IDs and names."""
+    print("DEBUG → get_all_boards CALLED")
+
     query = """
     query {
         boards {
@@ -60,19 +63,23 @@ def get_all_boards() -> str:
     }
     """
     data = execute_graphql(query)
+
     if not data:
         return "No data returned from Monday API."
+
     boards = data.get("boards", [])
     if not boards:
         return "No boards found."
     
-    result = "Available Boards:\\n"
+    result = "Available Boards:\n"
     for b in boards:
-        result += f"- Board Name: '{b['name']}' (ID: {b['id']})\\n"
+        result += f"- Board Name: '{b['name']}' (ID: {b['id']})\n"
     return result
 
 @tool
 def get_board_data(board_id: str) -> str:
+    print("DEBUG → get_board_data CALLED")
+    print("DEBUG → Board ID Received:", board_id)
     """Fetches ALL items and their column values for a specific board ID. Use this when you need to answer business intelligence questions. The data is returned as a JSON string representing the table."""
     query = """
     query ($boardId: [ID!]) {
@@ -94,6 +101,7 @@ def get_board_data(board_id: str) -> str:
     }
     """
     data = execute_graphql(query, {"boardId": [board_id]})
+    print("DEBUG → Raw Data From Monday:", data)
 
     if not isinstance(data, dict):
         return f"No data returned for board {board_id}."
