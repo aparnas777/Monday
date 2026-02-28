@@ -2,9 +2,9 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 
-from langchain.agents import AgentExecutor, create_react_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_groq import ChatGroq
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
 
 from agent_tools import get_tools
@@ -14,12 +14,11 @@ load_dotenv()
 st.set_page_config(page_title="Monday.com BI Agent", layout="wide")
 st.title("📊 Monday.com Business Intelligence Agent")
 
-# Verification
 api_token = os.environ.get("MONDAY_API_TOKEN", "")
 groq_key = os.environ.get("GROQ_API_KEY", "")
 
 if not api_token or not groq_key:
-    st.warning("Please ensure MONDAY_API_TOKEN and GROQ_API_KEY are set in your environment variables or Secrets.")
+    st.warning("Please ensure MONDAY_API_TOKEN and GROQ_API_KEY are set in your Streamlit secrets.")
     st.stop()
 
 @st.cache_resource
@@ -30,55 +29,34 @@ def get_agent_executor():
     )
     tools = get_tools()
 
-    # ReAct prompt — required format for create_react_agent
-    # Must include: {tools}, {tool_names}, {input}, {agent_scratchpad}
-    # chat_history is optional but supported
-    react_prompt = PromptTemplate.from_template(
-        """You are an expert Business Intelligence AI Agent for executives and founders.
-Your job is to answer founder-level business questions about Deals and Work Orders.
+    # create_tool_calling_agent uses Groq's native tool-calling API
+    # This avoids ALL string parsing issues (no StopIteration risk)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system",
+         "You are an expert Business Intelligence AI Agent for executives and founders. "
+         "Your job is to answer founder-level business questions about Deals and Work Orders. "
+         "\n\nYou have access to live Monday.com data tools. You MUST fetch fresh data every time "
+         "via `get_board_data` when asked a question. If you do not know the board IDs, first call `get_all_boards`. "
+         "\n\nWARNING: Monday.com data can be messy (nulls, inconsistent formats). "
+         "Clean and parse defensively before doing any math or aggregation. "
+         "Provide concise, executive-focused answers. Note any 'Data Quality Caveats' briefly."),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{input}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ])
 
-You have access to live Monday.com data tools. You MUST fetch fresh data every time via
-`get_board_data` when asked a question. If you do not know the board IDs, first call `get_all_boards`.
-
-WARNING: Monday.com data can be messy (nulls, inconsistent formats). Clean/parse defensively before math.
-Provide concise, executive-focused answers. Note any 'Data Quality Caveats' briefly.
-
-Previous conversation:
-{chat_history}
-
-You have access to the following tools:
-{tools}
-
-Use the following format EXACTLY:
-
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: the final answer to the original input question
-
-Begin!
-
-Question: {input}
-Thought:{agent_scratchpad}"""
-    )
-
-    agent = create_react_agent(llm, tools, react_prompt)
+    agent = create_tool_calling_agent(llm, tools, prompt)
     return AgentExecutor(
         agent=agent,
         tools=tools,
         verbose=True,
         return_intermediate_steps=True,
-        handle_parsing_errors=True,   # prevents crashes on malformed LLM output
+        handle_parsing_errors=True,
         max_iterations=10
     )
 
 agent_executor = get_agent_executor()
 
-# Chat state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -103,17 +81,18 @@ if prompt := st.chat_input("Ask a question about your business (e.g. 'How is our
 
     with st.chat_message("assistant"):
         with st.spinner("Fetching live data from Monday.com & analyzing..."):
-            # Build chat history string for ReAct prompt (simpler than message objects)
-            history_lines = []
+            # Build proper LangChain message history
+            chat_history = []
             for m in st.session_state.messages[:-1]:
-                role = "Human" if m["role"] == "user" else "Assistant"
-                history_lines.append(f"{role}: {m['content']}")
-            chat_history_str = "\n".join(history_lines) if history_lines else "None"
+                if m["role"] == "user":
+                    chat_history.append(HumanMessage(content=m["content"]))
+                elif m["role"] == "assistant":
+                    chat_history.append(AIMessage(content=m["content"]))
 
             try:
                 response = agent_executor.invoke({
                     "input": prompt,
-                    "chat_history": chat_history_str,
+                    "chat_history": chat_history,
                 })
 
                 output = response.get("output", "")
@@ -122,7 +101,7 @@ if prompt := st.chat_input("Ask a question about your business (e.g. 'How is our
                 if not output:
                     st.error("Agent returned no output.")
                 else:
-                    st.markdown(output)  # ← this was missing before!
+                    st.markdown(output)
 
                     if intermediate_steps:
                         with st.expander("🛠️ Tool Call Trace"):
@@ -141,4 +120,4 @@ if prompt := st.chat_input("Ask a question about your business (e.g. 'How is our
 
             except Exception as e:
                 st.error(f"Error executing BI Query: {str(e)}")
-                st.exception(e)  # shows full traceback during debugging
+                st.exception(e)
