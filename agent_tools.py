@@ -30,8 +30,8 @@ def execute_graphql(query: str, variables: dict = None) -> dict:
 
 @tool
 def get_all_boards() -> str:
-    \"\"\"Fetches a list of all accessible Monday.com boards. Returns their IDs and names.\"\"\"
-    query = \"\"\"
+    """Fetches a list of all accessible Monday.com boards. Returns their IDs and names."""
+    query = """
     query {
         boards {
             id
@@ -39,7 +39,7 @@ def get_all_boards() -> str:
             description
         }
     }
-    \"\"\"
+    """
     data = execute_graphql(query)
     boards = data.get("boards", [])
     if not boards:
@@ -52,8 +52,8 @@ def get_all_boards() -> str:
 
 @tool
 def get_board_data(board_id: str) -> str:
-    \"\"\"Fetches ALL items and their column values for a specific board ID. Use this when you need to answer business intelligence questions. The data is returned as a JSON string representing the table.\"\"\"
-    query = \"\"\"
+    """Fetches ALL items and their column values for a specific board ID. Use this when you need to answer business intelligence questions. The data is returned as a JSON string representing the table."""
+    query = """
     query ($boardId: [ID!]) {
         boards(ids: $boardId) {
             name
@@ -71,7 +71,7 @@ def get_board_data(board_id: str) -> str:
             }
         }
     }
-    \"\"\"
+    """
     data = execute_graphql(query, {"boardId": [board_id]})
     boards = data.get("boards", [])
     if not boards:
