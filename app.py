@@ -19,7 +19,7 @@ st.title("📊 Monday.com Business Intelligence Agent")
 
 # Verification
 api_token = os.environ.get("MONDAY_API_TOKEN", "")
-openai_key = os.environ.get("OPENAI_API_KEY", "")
+openai_key = os.environ.get("GROQ_API_KEY", "")
 
 if not api_token or not openai_key:
     st.warning("Please ensure MONDAY_API_TOKEN and OPENAI_API_KEY are set in your environment variables or Secrets.")
