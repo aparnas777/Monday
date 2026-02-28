@@ -19,14 +19,33 @@ def execute_graphql(query: str, variables: dict = None) -> dict:
     payload = {"query": query}
     if variables:
         payload["variables"] = variables
-    
-    response = requests.post(MONDAY_API_URL, json=payload, headers=_get_headers())
+
+    response = requests.post(
+        MONDAY_API_URL,
+        json=payload,
+        headers=_get_headers()
+    )
+
     response.raise_for_status()
-    res_json = response.json()
-    if 'errors' in res_json:
+
+    try:
+        res_json = response.json()
+    except Exception:
+        return {}
+
+    if not isinstance(res_json, dict):
+        return {}
+
+    if res_json.get("errors"):
         print(f"[Monday API Error]: {res_json['errors']}")
-        raise ValueError(f"GraphQL Error: {res_json['errors']}")
-    return res_json.get("data", {})
+        return {}
+
+    data = res_json.get("data")
+
+    if not isinstance(data, dict):
+        return {}
+
+    return data
 
 @tool
 def get_all_boards() -> str:
@@ -75,7 +94,11 @@ def get_board_data(board_id: str) -> str:
     }
     """
     data = execute_graphql(query, {"boardId": [board_id]})
-    boards = data.get("boards", [])
+
+    if not isinstance(data, dict):
+        return f"No data returned for board {board_id}."
+
+    boards = data.get("boards") or []
     if not boards:
         return f"Board {board_id} not found."
     
