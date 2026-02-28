@@ -94,11 +94,31 @@ if prompt := st.chat_input("Ask a question about your business (e.g. 'How is our
                     chat_history.append(AIMessage(content=m["content"]))
             
             try:
+                st.write("DEBUG → User Prompt Sent To LLM:")
+                st.write(prompt)
+                
+                st.write("DEBUG → Chat History Sent To LLM:")
+                st.write(chat_history)
+
+                
                 response = agent_executor.invoke({
                     "input": prompt,
                     "chat_history": chat_history
                 })
+                st.write("DEBUG → Full Agent Raw Response:")
+                st.write(response)
                 
+                intermediate_steps = response.get("intermediate_steps", [])
+                
+                st.write("DEBUG → Tool Calls Made:")
+                for step in intermediate_steps:
+                    action = step[0]
+                    tool_output = step[1]
+                
+                    st.write("-----")
+                    st.write("Tool Called:", action.tool)
+                    st.write("Tool Input:", action.tool_input)
+                    st.write("Tool Raw Output:", tool_output)
                 if not isinstance(response, dict):
                     st.error("Invalid response from agent.")
                     st.stop()
