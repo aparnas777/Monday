@@ -52,7 +52,7 @@ def get_agent_executor():
     
 
     agent = create_tool_calling_agent(llm, tools, prompt)
-    return AgentExecutor(agent=agent, tools=tools, verbose=True, return_intermediate_steps=True)
+    return AgentExecutor(agent=agent, tools=tools, verbose=False, return_intermediate_steps=True)
 
 
 agent_executor = get_agent_executor()
