@@ -28,7 +28,7 @@ if not api_token or not openai_key:
 # Initialize LangChain
 @st.cache_resource
 def get_agent_executor():
-    llm = ChatOpenAI(model="gpt-4o", temperature=0) # gpt-4o gives best reasoning over JSON tables
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0) # gpt-4o gives best reasoning over JSON tables
     tools = get_tools()
     
     prompt = ChatPromptTemplate.from_messages([
