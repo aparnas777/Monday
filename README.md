@@ -8,51 +8,34 @@ An AI agent that answers founder-level business intelligence queries by integrat
 - **Agentic BI capabilities**: Uses `langchain` and `gpt-4o` (or `gpt-3.5-turbo`) to write Python code to execute analysis over Monday.com GraphQL data.
 - **Streamlit Interface**: An interactive chat interface to converse with the agent.
 
-## How to run on Kaggle
+## How to run on Streamlit Community Cloud
 
-Since this provides a Streamlit web app, running it entirely inside a Kaggle notebook requires tunneling the web port.
+Hosting on Streamlit Community Cloud is the easiest way to share a live, no-setup prototype.
 
-### 1. Setup Data and Keys
-1. Create a Kaggle Notebook.
-2. Upload the `Deal funnel Data.xlsx` and `Work_Order_Tracker Data.xlsx` files to your Kaggle input directory (e.g., `/kaggle/input/...`).
-3. Upload all the Python files from this repo (`app.py`, `ingest.py`, `agent_tools.py`, `requirements.txt`).
-4. In Kaggle, add your API keys in the **Add-ons -> Secrets** menu:
-   - `MONDAY_API_TOKEN`: Your Monday.com API Token.
-   - `OPENAI_API_KEY`: Your OpenAI API Key.
+### 1. Push to GitHub
+1. Create a new public (or private) GitHub repository.
+2. Upload all the Python files from this repo (`app.py`, `ingest.py`, `agent_tools.py`, `requirements.txt`).
 
-### 2. Install Dependencies
-Run the following in a notebook cell:
-```python
-!pip install -r requirements.txt
-!npm install -g localtunnel
-```
-
-### 3. Data Ingestion (One-time setup)
-First, you need to create the boards on Monday.com and populate them with the provided Excel data.
-Run the ingestion script in a cell:
-```python
-import os
-from kaggle_secrets import UserSecretsClient
-
-user_secrets = UserSecretsClient()
-os.environ["MONDAY_API_TOKEN"] = user_secrets.get_secret("MONDAY_API_TOKEN")
-
-# Run the ingestion script (update the paths to your kaggle input directory)
-!python ingest.py --work-orders "/kaggle/input/your-dataset/Work_Order_Tracker Data.xlsx" --deals "/kaggle/input/your-dataset/Deal funnel Data.xlsx"
+### 2. Data Ingestion (One-time setup locally)
+Before deploying, you need to create the boards on Monday.com and populate them with the provided Excel data.
+You can run the ingestion script locally on your machine or in a Colab/Kaggle notebook:
+```bash
+# Ensure you have your MONDAY_API_TOKEN set as an environment variable
+pip install pandas requests openpyxl
+python ingest.py --work-orders "path/to/Work_Order_Tracker Data.xlsx" --deals "path/to/Deal funnel Data.xlsx"
 ```
 *Note: The script outputs the IDs of the newly created boards. Write them down.*
 
-### 4. Run the Streamlit Agent
-Finally, start the Streamlit app and Expose it via Localtunnel:
-```python
-import os
-from kaggle_secrets import UserSecretsClient
+### 3. Deploy to Streamlit
+1. Go to [share.streamlit.io](https://share.streamlit.io/) and log in with your GitHub account.
+2. Click **New app**.
+3. Select the repository, branch, and set the Main file path to `app.py`.
+4. **CRITICAL:** Before clicking Deploy, click on **Advanced settings**.
+5. In the **Secrets** section, add your API keys like this:
+   ```toml
+   MONDAY_API_TOKEN = "your_actual_monday_token"
+   GROQ_API_KEY = "your_actual_groq_api_key"
+   ```
+6. Click **Save** and then **Deploy!**
 
-user_secrets = UserSecretsClient()
-os.environ["MONDAY_API_TOKEN"] = user_secrets.get_secret("MONDAY_API_TOKEN")
-os.environ["OPENAI_API_KEY"] = user_secrets.get_secret("OPENAI_API_KEY")
-
-!streamlit run app.py & npx localtunnel --port 8501
-```
-
-Click the `localtunnel` URL in the output to access your hosted app. (Localtunnel might ask for your public IP, which you can get by running `!curl ipv4.icanhazip.com`).
+Your agent will now be live and accessible via a public URL provided by Streamlit.
