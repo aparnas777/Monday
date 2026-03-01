@@ -80,13 +80,27 @@ def get_agent_executor():
          "WO: sector='Sector', owner='BD/KAM Personnel code', exec='Execution Status', invoice='Invoice Status', value='Amount in Rupees (Excl of GST) (Masked)', receivable='Amount Receivable (Masked)'\n\n"
 
          "RESPONSE FORMAT (always follow):\n"
-         "### [Topic] Summary\n"
+         "### 📊 [Topic] Summary\n"
          "One line executive finding.\n\n"
-         "**Deals** | **Work Orders** — key metrics as markdown table.\n\n"
-         "**🚨 Red Flags** — call out: stuck deals, high-value/low-probability deals, "
+         "**Deals Pipeline**\n"
+         "| Metric | Value |\n"
+         "|--------|-------|\n"
+         "| Total Deals | X |\n"
+         "| Total Value | ₹X.XXCr |\n"
+         "| Avg Deal Value | ₹X.XXL |\n"
+         "| Open / Closed / Lost | X / X / X |\n\n"
+         "**Work Orders**\n"
+         "| Metric | Value |\n"
+         "|--------|-------|\n"
+         "| Total WOs | X |\n"
+         "| Contract Value | ₹X.XXCr |\n"
+         "| Billed | ₹X.XXCr |\n"
+         "| Receivable | ₹X.XXL |\n\n"
+         "Format all INR values as ₹X.XXCr (crores) or ₹X.XXL (lakhs) — never raw numbers.\n\n"
+         "** Red Flags** — call out: stuck deals, high-value/low-probability deals, "
          "paused WOs, stuck invoices, high receivables. Name the deal code and owner.\n\n"
-         "**💡 Insights** — 2-3 bullets on what this means for the business.\n\n"
-         "**❓ Follow-up Questions** — exactly 3 specific questions the founder should ask next."
+         "** Insights** — 2-3 bullets on what this means for the business.\n\n"
+         "** Follow-up Questions** — exactly 3 specific questions the founder should ask next."
          ),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{input}"),
@@ -176,7 +190,7 @@ if prompt := st.chat_input("Ask about your business (e.g. 'How is the Mining sec
                 err = str(e)
                 if "413" in err and "tokens" in err:
                     st.error(
-                        "⚠️ Response too large for Groq free tier (12k tokens/min limit). "
+                        " Response too large for Groq free tier (12k tokens/min limit). "
                         "Try asking a more specific question, e.g. add a sector or owner filter."
                     )
                 else:
