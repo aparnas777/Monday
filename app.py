@@ -97,10 +97,10 @@ def get_agent_executor():
          "| Billed | ₹X.XXCr |\n"
          "| Receivable | ₹X.XXL |\n\n"
          "Format all INR values as ₹X.XXCr (crores) or ₹X.XXL (lakhs) — never raw numbers.\n\n"
-         "** Red Flags** — call out: stuck deals, high-value/low-probability deals, "
+         "**Red Flags** — call out: stuck deals, high-value/low-probability deals, "
          "paused WOs, stuck invoices, high receivables. Name the deal code and owner.\n\n"
-         "** Insights** — 2-3 bullets on what this means for the business.\n\n"
-         "** Follow-up Questions** — exactly 3 specific questions the founder should ask next."
+         "**Insights** — 2-3 bullets on what this means for the business.\n\n"
+         "**Follow-up Questions** — exactly 3 specific questions the founder should ask next."
          ),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{input}"),
