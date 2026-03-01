@@ -81,12 +81,12 @@ def get_agent_executor():
          "  'Billing Status'                                     → BIlled / Partially Billed / Not Billable / Stuck / Update Required\n"
          "  'AR Priority account'                                → Priority flag\n\n"
 
-         "⚠️ CRITICAL — SECTOR COLUMN NAME DIFFERS PER BOARD:\n"
+         "CRITICAL — SECTOR COLUMN NAME DIFFERS PER BOARD:\n"
          "  Deals board     → 'Sector/service'\n"
          "  Work Order board → 'Sector'\n"
          "Always use the correct column name per board.\n\n"
 
-         "⚠️ CRITICAL — ALWAYS QUERY BOTH BOARDS:\n"
+         "CRITICAL — ALWAYS QUERY BOTH BOARDS:\n"
          "For ANY question, run tools on BOTH boards and combine findings into one answer.\n\n"
 
          "WORKFLOW:\n"
