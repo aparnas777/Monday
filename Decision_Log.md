@@ -1,55 +1,57 @@
-Tech Stack Choices
 
-Python 3.10 & LangChain
-Python was chosen for its strong data ecosystem. LangChain’s create_tool_calling_agent was selected for stable, native tool-calling support with Groq.
+# Decision Log
 
-Groq (LLaMA 3.3 70B)
-Selected as a cost-efficient inference layer after OpenAI API credits were exhausted. Provides fast responses with native tool calling.
+## Tech Stack Choices
 
-Streamlit
-Used for rapid development of a conversational BI interface with tool-trace visibility for debugging.
+1. **Python 3.10 & LangChain**
+   Python was chosen for its strong data ecosystem. LangChain’s `create_tool_calling_agent` was selected for stable, native tool-calling support with Groq.
 
-Monday.com GraphQL API
-Used for live, structured data retrieval with precise column-level queries.
+2. **Groq (LLaMA 3.3 70B)**
+   Selected as a cost-efficient inference layer after OpenAI API credits were exhausted. Provides fast responses with native tool calling.
 
-Agent Architecture Decision
+3. **Streamlit**
+   Used for rapid development of a conversational BI interface with tool-trace visibility for debugging.
+
+4. **Monday.com GraphQL API**
+   Used for live, structured data retrieval with precise column-level queries.
+
+---
+
+## Agent Architecture Decision
 
 Instead of letting the LLM:
 
-Perform numeric aggregation
-
-Parse raw board rows
-
-Construct complex GraphQL queries
+* Perform numeric aggregation
+* Parse raw board rows
+* Construct complex GraphQL queries
 
 The system uses structured tools and shifts all aggregation logic to Python.
 
-What This System Can Do
+
+# What This System Can Do
 
 The Monday.com BI Agent can:
 
-Answer sector-level performance questions
-(“How is Mining doing?”)
+* Answer sector-level performance questions
+  (“How is Mining doing?”)
 
-Analyze pipeline health
-(Deal stages, closure probability, stuck deals)
+* Analyze pipeline health
+  (Deal stages, closure probability, stuck deals)
 
-Track revenue and billing metrics
+* Track revenue and billing metrics
 
-Identify red flags
-(Paused work orders, overdue invoices, high receivables)
+* Identify red flags
+  (Paused work orders, overdue invoices, high receivables)
 
-Combine insights across multiple boards
-(Sales + Execution data)
+* Combine insights across multiple boards
+  (Sales + Execution data)
 
-Deliver structured, founder-ready responses:
+* Deliver structured, founder-ready responses:
 
-Executive summary
+  * Executive summary
+  * Key metrics tables
+  * Risk alerts
+  * Business insights
+  * Guided follow-up questions
 
-Key metrics tables
 
-Risk alerts
-
-Business insights
-
-Guided follow-up questions
