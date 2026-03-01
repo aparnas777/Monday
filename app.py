@@ -71,10 +71,13 @@ def get_agent_executor():
 
          "RULES:\n"
          "- ALWAYS query BOTH boards and combine the answer.\n"
-         "- Specific question (one sector/owner) → get_filtered_board_data on both boards.\n"
-         "- Comparison/ranking (all sectors) → get_board_aggregates on both boards.\n"
+         "- ANY question about a sector/owner/status (even specific like 'How is Mining doing?') → get_board_aggregates grouped by that column on BOTH boards. Python summarizes ALL groups, you read the relevant one. Lowest tokens, full accuracy.\n"
+         "- Need ROW-LEVEL detail only (list of stuck deal names, specific overdue WO serials) → get_filtered_board_data.\n"
          "- Simple listing ('what boards?') → get_all_boards only.\n"
          "- If unsure of column names → get_board_schema first.\n\n"
+         "AGGREGATION COLUMN MAP (exact names):\n"
+         "Deals: sector='Sector/service', owner='Owner code', status='Deal Status', stage='Deal Stage', value='Masked Deal value'\n"
+         "WO: sector='Sector', owner='BD/KAM Personnel code', exec='Execution Status', invoice='Invoice Status', value='Amount in Rupees (Excl of GST) (Masked)', receivable='Amount Receivable (Masked)'\n\n"
 
          "RESPONSE FORMAT (always follow):\n"
          "### [Topic] Summary\n"
